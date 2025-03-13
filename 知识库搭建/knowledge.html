@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        input[type="submit"] {
+            margin: 5px 0;
+            padding: 8px;
+        }
+
+        #search-results {
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Knowledge Base System</h1>
+    <!-- 文件上传表单 -->
+    <form id="upload-form" enctype="multipart/form-data">
+        <label for="pdf-file">Upload PDF:</label>
+        <input type="file" id="pdf-file" name="pdf_file" accept=".pdf">
+        <input type="submit" value="Upload">
+    </form>
+    <div id="upload-status"></div>
+
+    <!-- 搜索表单 -->
+    <form id="search-form">
+        <label for="search-query">Search Knowledge:</label>
+        <input type="text" id="search-query" placeholder="Enter your query">
+        <input type="submit" value="Search">
+    </form>
+    <div id="search-results"></div>
+
+    <script>
+        const uploadForm = document.getElementById('upload-form');
+        const uploadStatus = document.getElementById('upload-status');
+        const searchForm = document.getElementById('search-form');
+        const searchResults = document.getElementById('search-results');
+
+        // 处理文件上传
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('pdf-file');
+            const file = fileInput.files[0];
+            if (!file) {
+                uploadStatus.textContent = 'Please select a PDF file.';
+                return;
+            }
+            formData.append('pdf_file', file);
+            try {
+                const response = await fetch('/upload_pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                uploadStatus.textContent = data.message;
+            } catch (error) {
+                uploadStatus.textContent = `Upload failed: ${error.message}`;
+            }
+        });
+
+        // 处理搜索请求
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = document.getElementById('search-query').value;
+            if (!query) {
+                searchResults.textContent = 'Please enter a search query.';
+                return;
+            }
+            try {
+                const response = await fetch(`/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                searchResults.innerHTML = '';
+                if (data.results.length === 0) {
+                    searchResults.textContent = 'No results found.';
+                } else {
+                    const ul = document.createElement('ul');
+                    const li = document.createElement('li');
+                    li.textContent = `${data.results})`;
+                    ul.appendChild(li);
+                    searchResults.appendChild(ul);
+                }
+            } catch (error) {
+                searchResults.textContent = `Search failed: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+
+</html>
